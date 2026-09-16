@@ -1,5 +1,12 @@
 export default function Home() {
   return (
+<<<<<<< HEAD
+    <div >
+    
+      <h2> ยินดีต้อนรับ </h2>
+      <p> โดย คณิศร สุขเจริญ </p>
+ 
+=======
     <div className="container py-5">
       <div className="text-center">
 
@@ -18,6 +25,7 @@ export default function Home() {
         </div>
 
       </div>
+>>>>>>> a7241388b495671ff166cda30d0bb823fba17ad3
     </div>
   );
 }
