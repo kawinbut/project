@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
+=======
+import BootstrapClient from "@/components/BootstrapClient";
+>>>>>>> a7241388b495671ff166cda30d0bb823fba17ad3
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 
