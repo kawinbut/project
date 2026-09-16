@@ -47,7 +47,7 @@ export default function AdminBlogList({
 
   async function handleUpdate(id: string) {
     if (!formData.title.trim()) {
-      alert("กรุณาระบุชื่อบทความที่ต้องการ");
+      alert("กรุณาระบุชื่อบทความ");
       return;
     }
 
@@ -65,7 +65,7 @@ export default function AdminBlogList({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "แก้ไขบทความไม่สำเร็จกรุณากรอกใหม่");
+        throw new Error(result.message || "แก้ไขบทความไม่สำเร็จ");
       }
 
       setBlogs((currentBlogs) =>
@@ -79,7 +79,7 @@ export default function AdminBlogList({
       alert(
         error instanceof Error
           ? error.message
-          : "แก้ไขบทความไม่สำเร็จกรุณากรอกใหม่",
+          : "แก้ไขบทความไม่สำเร็จ",
       );
     } finally {
       setIsSaving(false);
@@ -146,7 +146,7 @@ export default function AdminBlogList({
                       title: event.target.value,
                     })
                   }
-                  placeholder="ชื่อบทความที่ต้องการ"
+                  placeholder="ชื่อบทความ"
                   className="w-full rounded-lg border px-4 py-2"
                 />
 

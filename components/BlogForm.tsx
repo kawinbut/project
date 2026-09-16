@@ -44,7 +44,7 @@ export default function BlogForm() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message ?? "เพิ่มข้อมูลไม่สำเร็จกรุณากรอกใหม่");
+                throw new Error(data.message ?? "เพิ่มข้อมูลไม่สำเร็จ");
             }
 
             setMessage("เพิ่มข้อมูลสำเร็จ");
@@ -73,7 +73,7 @@ export default function BlogForm() {
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    <label>หัวข้อ</label>
+                    <label>หัวข้อเรื่อง</label>
                     <input
                         type="text"
                         value={title}

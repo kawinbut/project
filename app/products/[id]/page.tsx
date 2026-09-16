@@ -1,67 +1,189 @@
+import Image from "next/image";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import mongoose from "mongoose";
+
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
-import ProductCard from "@/components/ProductCard";
-import Category from "@/models/Category";
 
-export const dynamic = "force-dynamic";
+type ProductDetailPageProps = {
+    params: Promise<{
+        id: string;
+    }>;
+};
 
-export default async function ProductsPage() {
-  await connectDB();
+type CategoryData = {
+    _id: mongoose.Types.ObjectId;
+    title?: string;
+};
 
-  const products = await Product.find({
-    published: true,
-  })
-    .populate("category", "name slug")
-    .sort({ createdAt: -1 })
-    .lean();
+async function getProduct(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return null;
+    }
 
-  const serializedProducts = products.map((product) => ({
-    _id: product._id.toString(),
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    stock: product.stock,
-    imageUrl: product.imageUrl,
-    category:
-      product.category &&
-      typeof product.category === "object" &&
-      "name" in product.category
-        ? {
-            _id:
-              "_id" in product.category && product.category._id
-                ? product.category._id.toString()
-                : "",
-            name: String(product.category.name),
-          }
-        : undefined,
-  }));
+    await connectDB();
 
-  return (
-    <main className="mx-auto max-w-7xl p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">
-          สินค้าทั้งหมด
-        </h1>
+    const product = await Product.findById(id)
+        .populate("category")
+        .lean();
 
-        <p className="mt-2 text-gray-600">
-          เลือกสินค้าที่คุณสนใจ
-        </p>
-      </div>
+    if (!product) {
+        return null;
+    }
 
-      {serializedProducts.length === 0 ? (
-        <div className="rounded-xl border p-10 text-center">
-          ยังไม่มีสินค้า
-        </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {serializedProducts.map((product) => (
-            <ProductCard
-              key={product._id}
-              product={product}
-            />
-          ))}
-        </div>
-      )}
-    </main>
-  );
+    return product as typeof product & {
+        category?: CategoryData | null;
+    };
+}
+
+function stripHtml(html: string) {
+    return html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+export async function generateMetadata({
+    params,
+}: ProductDetailPageProps): Promise<Metadata> {
+    const { id } = await params;
+
+    const product = await getProduct(id);
+
+    if (!product) {
+        return {
+            title: "ไม่พบสินค้า",
+            description: "ไม่พบสินค้าที่คุณกำลังค้นหา",
+        };
+    }
+
+    const name = String(product.name ?? "สินค้า");
+
+    const description = stripHtml(
+        String(product.description ?? "")
+    );
+
+    return {
+        title: name,
+        description: description.slice(0, 300),
+    };
+}
+
+export default async function ProductDetailPage({
+    params,
+}: ProductDetailPageProps) {
+    const { id } = await params;
+
+    const product = await getProduct(id);
+
+    if (!product) {
+        notFound();
+    }
+
+    const name = String(
+        product.name ?? "ไม่มีชื่อสินค้า"
+    );
+
+    const category = String(
+        product.category?.title ?? ""
+    );
+
+    const description = String(
+        product.description ?? ""
+    );
+
+    const createdAt = product.createdAt
+        ? new Date(product.createdAt).toISOString()
+        : "";
+
+    const formattedDate = product.createdAt
+        ? new Date(product.createdAt).toLocaleDateString(
+            "th-TH",
+            {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            }
+        )
+        : "";
+
+    return (
+        <main className="mx-auto w-full max-w-4xl px-6 py-10">
+
+            <Link
+                href="/products"
+                className="mb-8 inline-flex items-center text-sm font-medium text-green-700 hover:text-green-900"
+            >
+                ← กลับไปหน้าสินค้า
+            </Link>
+
+            <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-10">
+
+
+
+                {formattedDate && (
+                    <time
+                        dateTime={createdAt}
+                        className="text-sm text-gray-500"
+                    >
+                        {formattedDate}
+                    </time>
+                )}
+
+                <div className="relative aspect-square w-full bg-gray-100">
+                    <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        fill
+                        sizes="
+                        (max-width: 640px) 100vw,
+                        (max-width: 1024px) 50vw,
+                        25vw
+                        "
+                        className="object-cover"
+                    />
+                </div>
+
+                <h1 className="mt-3 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+                    {name}
+                </h1>
+                {product.stock && (
+                    <p className="mt-4 text-sm text-gray-500">
+                        คงเหลือ: {product.stock}
+                    </p>
+                )}
+
+                {category && (
+                    <p className="mt-3 text-sm text-green-700">
+                        #{category}
+                    </p>
+                )}
+
+                {description ? (
+                    <div
+                        className="
+                            prose prose-sm mt-8 max-w-none
+                            leading-8 text-gray-700
+                            prose-headings:text-gray-900
+                            prose-a:text-green-700
+                            prose-strong:text-gray-900
+                            prose-img:rounded-xl
+                            "
+                        dangerouslySetInnerHTML={{
+                            __html: description,
+                        }}
+                    />
+                    
+                ) : (
+                    <p className="mt-8 text-gray-500">
+                        สินค้าชิ้นนี้ยังไม่มีรายละเอียด
+                    </p>
+                )}
+
+            </article>
+
+        </main>
+    );
 }
